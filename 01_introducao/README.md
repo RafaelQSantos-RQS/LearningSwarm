@@ -81,6 +81,21 @@ docker info | grep -i swarm
 docker node ls
 ```
 
+### RedesCriadas
+
+Ao iniciar o Swarm, novas redes aparecem automaticamente:
+
+```bash
+docker network ls
+# NETWORK ID     NAME              DRIVER    SCOPE
+# ...           ingress           overlay   swarm   # <-- Load balancing do Swarm
+# ...           docker_gwbridge   bridge    local   # <-- Bridge host<->containers
+```
+
+Ao sair do Swarm (`docker swarm leave`), as redes `ingress` e `docker_gwbridge` (escopo swarm) são removidas. A rede `docker_gwbridge` permanece porque é a bridge padrão do Docker para comunicação host ↔ containers.
+
+> **Nota**: As redes `bridge`, `host` e `none` são redes padrão do Docker que existem em qualquer instalação, com ou sem Swarm.
+
 ### Primeiro Service
 
 > **Quando usar `docker service create`**: Para criar um container isolado gerenciado pelo Swarm (sem compose)
