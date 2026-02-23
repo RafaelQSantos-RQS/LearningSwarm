@@ -3,7 +3,7 @@
 ## Estrutura das Aulas
 
 Cada lição segue o padrão `XX_topico`:
-- `00_referencia_cli` - Referência da CLI oficial do Docker Swarm
+- `00_docs` - Documentação oficial e referência CLI
 - `01_introducao` - Conceitos básicos e init
 - `02_nodes_cluster` - Nodes, manager/worker, quorum
 - `03_services` - Services, réplicas, tasks
@@ -22,13 +22,23 @@ Cada pasta de aula DEVE conter:
 - `codigo/` - Exemplos de configuração
 - `exercicios/` - Desafios práticos
 
-### Pasta de Referência (00_referencia_cli)
+### Pasta de Referência (00_docs)
 
-Contém documentação limpa da CLI oficial do Docker Swarm. Cada comando tem seu próprio arquivo markdown com:
-- Uso
-- Opções
-- Exemplos
-- Quando usar
+Contém documentação oficial do Docker Swarm organizada em:
+
+**`cli/`** - Referência de comandos CLI
+- Cada comando tem seu próprio arquivo com: uso, opções, exemplos, "quando usar"
+
+**`conceitos/`** - Conceitos fundamentais
+- key-concepts.md, services.md, swarm-mode.md
+
+**`arquitetura/`** - Como o Swarm funciona por dentro
+- how-swarm-mode-works/, nodes, services, pki, raft
+
+**`tutoriais/`** - Tutoriais oficiais passo a passo
+
+**`guia/`** - Guias de administração
+- admin_guide, networking, secrets, configs, etc
 
 **Todas as aulas DEVEM referenciar esses arquivos na seção de prática.**
 
@@ -48,7 +58,7 @@ Cada README deve seguir:
    - Incluir tabela de comandos usados com colunas: Comando, Descrição, Referência
    - Adicionar notas "Quando usar" para cada comando/key feature
 4. **Exercícios** - Desafios propostos
-5. **Referências** - Links oficiais + referência aos arquivos em 00_referencia_cli
+5. **Referências** - Links oficiais + referência aos arquivos em 00_docs
 
 ## Fluxo de Trabalho
 
