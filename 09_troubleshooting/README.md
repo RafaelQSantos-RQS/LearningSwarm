@@ -17,16 +17,6 @@ Stack
         └── Task (container)
 ```
 
-### Ferramentas de Debug
-
-| Comando | Uso |
-|---------|-----|
-| `docker service ps` | Ver status das tasks |
-| `docker service logs` | Logs agregados do service |
-| `docker service inspect` | Detalhes completos |
-| `docker container inspect` | Debug de container específico |
-| `docker node inspect` | Debug de nó específico |
-
 ### Problemas Comuns
 
 1. **Service não inicia**: Ver image, resources, constraints
@@ -35,9 +25,21 @@ Stack
 4. **Service não escala**: Ver resources disponíveis
 5. **Manager indisponível**: Ver quorum
 
+### Estados de Tasks
+
+```
+NEW → ASSIGNED → PREPARING → RUNNING → COMPLETE
+                ↓
+              FAILED
+```
+
 ## Prática
 
 ### Verificando Status
+
+> **Quando usar `docker service ls`**: Para ver todos os serviços e status
+
+> **Quando usar `docker service ps`**: Para ver as tasks de um serviço
 
 ```bash
 # Ver todos os serviços e status
@@ -46,14 +48,13 @@ docker service ls
 # Ver tasks de um serviço (mais detalhado)
 docker service ps myservice
 
-# Ver status detalhado
-docker service ps myservice --no-trunc
-
 # Ver apenas tasks com problemas
 docker service ps myservice | grep -E "Rejected|New|Pending"
 ```
 
 ### Inspect
+
+> **Quando usar `docker service inspect`**: Para debug detalhado
 
 ```bash
 # Inspect service (resumido)
@@ -70,6 +71,8 @@ docker container inspect <container-id>
 ```
 
 ### Logs
+
+> **Quando usar `docker service logs`**: Para ver logs agregados de todas as réplicas
 
 ```bash
 # Logs do service (todas as tasks)
@@ -137,6 +140,8 @@ docker volume inspect <volume-name>
 
 ### Recuperação
 
+> **Quando usar `docker service update --force`**: Para forçar recriação de todas as tasks
+
 ```bash
 # Forçar recreation de todas as tasks
 docker service update --force myservice
@@ -173,6 +178,12 @@ docker swarm leave --force
 
 ## Referências
 
+### Documentação Oficial
 - [Troubleshooting](https://docs.docker.com/engine/swarm/troubleshooting/)
 - [Debug a service](https://docs.docker.com/engine/swarm/services/#debug-a-service)
-- [Swarm administration](https://docs.docker.com/engine/swarm/admin_guide/)
+
+### Comandos CLI
+- [docker service ps]()
+- [docker service logs]()
+- [docker service inspect]()
+- [docker node inspect]()

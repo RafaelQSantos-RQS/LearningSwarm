@@ -6,24 +6,27 @@
 - Compreender a diferença entre services, tasks e containers
 - Configurar réplicas e políticas de update
 - Entender o ciclo de vida de uma task
+- Publicar portas e usar o routing mesh
 
 ## Teoria
 
 ### O que é um Service?
 
-Um **Service** é a definição de como você quer executar uma aplicação no Swarm. É similar ao conceito de service no Docker Compose, mas com superpoderes de orquestração.
+Um **Service** é a definição de como você quer executar uma aplicação no Swarm. É o modelo **declarativo** - você define o estado desejado e o Docker se encarrega de mantê-lo.
 
-```yaml
-# Service vs Compose
-# Compose: você define "replicas" manualmente (se supported)
-# Swarm: replicas é built-in, gerenciado automaticamente
-```
+O estado desejado inclui:
+- Imagem e tag
+- Número de réplicas
+- Portas expostas
+- Recursos (CPU, memória)
+- Políticas de restart
+- Constraints de placement
 
 ### Service vs Task vs Container
 
 ```
 ┌─────────────────────────────────────────────────┐
-│                    SERVICE                      │
+│                    SERVICE                       │
 │   "Quero 3 réplicas do nginx na porta 80"      │
 └─────────────────────┬───────────────────────────┘
                       │
@@ -42,46 +45,55 @@ Um **Service** é a definição de como você quer executar uma aplicação no S
 
 ### Tipos de Service
 
-1. **Replicated**: Número específico de réplicas
-   - Distribuídas entre os nós
-   - Load balancing automático
+#### Replicated
+Número específico de réplicas distribuídas entre os nós. Use para web servers, APIs, etc.
 
-2. **Global**: Uma task em cada nó
-   - Ideal para: monitoring agents, logging, security
-   - Útil para serviços que precisam estar em todos os nós
+#### Global
+Uma task em cada nó disponível. Ideal para: monitoring agents, logging, security.
 
-### Ciclo de Vida de uma Task
+### Publishing Ports
+
+O Swarm oferece duas formas de expor portas:
+
+1. **Routing Mesh (default)**: Publica a porta em todos os nós. O tráfego é roteado para uma task.
 
 ```
-NEW → ASSIGNED → PREPARING → RUNNING → COMPLETE
-                ↓
-              FAILED
+┌─────────────────────────────────────────────────────┐
+│              ROUTING MESH                            │
+│                                                      │
+│  Request ──► Node 1:8080 ──► (IPVS) ──► Node 3:80 │
+│                  (não tem task)        (tem task)   │
+│                                                      │
+└─────────────────────────────────────────────────────┘
 ```
 
-- **NEW**: Task criada
-- **ASSIGNED**: Atribuída a um nó
-- **PREPARING**: Preparando ambiente (download image, etc)
-- **RUNNING**: Container em execução
-- **COMPLETE**: Task finalizada com sucesso
-- **FAILED**: Task falhou
+2. **Host Mode**: Publica a porta diretamente no nó onde a task está rodando.
 
-### update & rollback policies
+### Imagens e Tags
 
-- **update-delay**: Tempo entre updates de cada replicas
-- **update-parallelism**: Quantas réplicas atualizar simultaneamente
-- **update-failure-action**: O que fazer se falhar (continue, pause, rollback)
-- **rollback-delay**: Tempo entre rollbacks
-- **rollback-parallelism**: Quantas réplicas fazer rollback simultaneamente
+Ao criar um service:
+- Se não especificar tag, usa `latest`
+- A tag é resolvida para um **digest** (hash) no momento da criação
+- Todas as tasks usam o **mesmo digest** - mesma versão da imagem
+- Para atualizar, use `docker service update --image`
+
+### Recursos e Constraints
+
+- **Resources**: CPU e memória (limits e reservations)
+- **Constraints**: Limitar onde o service pode rodar (node.role, node.labels, etc)
+- **Preferences**: Tentar distribuir igualmente (best-effort)
 
 ## Prática
 
 ### Criando Services
 
+> **Quando usar `docker service create`**: Para criar um service gerenciado pelo Swarm
+
 ```bash
 # Service básico
 docker service create --name web --replicas 3 -p 80:80 nginx:alpine
 
-# Com recursos (CPU/memória)
+# Com recursos
 docker service create \
   --name api \
   --replicas 2 \
@@ -90,15 +102,43 @@ docker service create \
   -e NODE_ENV=production \
   nginx:alpine
 
-# Com constraints (veremos mais em aula 08)
+# Com constraints
 docker service create \
   --name db \
-  --replicas 1 \
   --constraint "node.role==manager" \
   postgres:15
+
+# Global service
+docker service create --mode global --name monitoring prometheus/prometheus
+```
+
+### Modos de Service
+
+```bash
+# Replicated (padrão)
+docker service create --name web --replicas 3 nginx
+
+# Global (uma task por nó)
+docker service create --mode global --name agent myagent
+```
+
+### Publicando Portas
+
+> **Quando usar `-p` ou `--publish`**: Para expor portas do service
+
+```bash
+# Routing mesh (todos os nós)
+docker service create -p 8080:80 nginx
+
+# Host mode (diretamente no nó)
+docker service create --publish mode=host,target=80,published=8080 nginx
 ```
 
 ### Gerenciando Services
+
+> **Quando usar `docker service ls`**: Para listar todos os serviços
+
+> **Quando usar `docker service ps`**: Para ver as tasks de um serviço
 
 ```bash
 # Listar services
@@ -107,50 +147,32 @@ docker service ls
 # Ver tasks de um service
 docker service ps web
 
-# Inspect service (JSON completo)
+# Inspect service (detalhes completos)
 docker service inspect web
+docker service inspect --pretty web  # formato legível
 
-# Ver apenas nome e imagem
-docker service inspect --pretty web
-
-# Logs do service (importante: aggregate de todas as tasks)
+# Logs do service (agregado de todas as tasks)
 docker service logs -f web
+
+# Escalar service
+docker service scale web=5
+
+# Atualizar service
+docker service update --image nginx:latest web
+docker service update --replicas 3 web
+docker service update --env-add NODE_ENV=production web
 
 # Remover service
 docker service rm web
-
-# Escalar (maneira antiga - ainda funciona)
-docker service scale web=5
-
-# Atualizar image
-docker service update --image nginx:latest web
 ```
 
-### Replicated vs Global
+### Atualizações e Rollbacks
+
+> **Quando usar `docker service update`**: Para alterar qualquer configuração do service (faz rolling update)
+
+> **Quando usar `docker service rollback`**: Para reverter para a configuração anterior
 
 ```bash
-# Replicated (padrão)
-docker service create --name web --replicas 3 nginx
-
-# Global (uma task por nó)
-docker service create --mode global --name monitoring-agent prometheus/prometheus
-```
-
-### Atualizando Services
-
-```bash
-# Atualizar réplicas
-docker service update --replicas 5 web
-
-# Atualizar variáveis de ambiente
-docker service update --env-add NODE_ENV=production web
-
-# Atualizar portas
-docker service update --publish-add 8080:80 web
-
-# Rollback para versão anterior
-docker service rollback web
-
 # Atualizar com política customizada
 docker service update \
   --image nginx:1.25 \
@@ -158,17 +180,41 @@ docker service update \
   --update-parallelism 1 \
   --update-failure-action pause \
   web
+
+# Rollback
+docker service rollback web
+```
+
+### Redes e Volumes
+
+```bash
+# Conectar a uma network overlay
+docker service create --network minha-rede --name api myapi
+
+# Adicionar network
+docker service update --network-add minha-rede api
+
+# Adicionar volume
+docker service create --mount type=volume,src=meuvolume,dst=/data --name db postgres
 ```
 
 ## Exercícios
 
 1. **Exercício 1**: Criar um service com 3 réplicas e observar a distribuição das tasks
-2. **Exercício 2**: Forçar uma task a falhar (docker service update com --force) e observar o comportamento
+2. **Exercício 2**: Publicar uma porta e testar o routing mesh (acessar por qualquer nó)
 3. **Exercício 3**: Criar um global service e verificar que há uma task em cada nó
 4. **Exercício 4**: Fazer um update do service (mudar imagem) e observar o rolling update
+5. **Exercício 5**: Testar rollback após um update
+6. **Exercício 6**: Criar service com limites de CPU/memória e verificar com `docker service inspect`
 
 ## Referências
 
-- [How services work](https://docs.docker.com/engine/swarm/how-swarm-mode-works/services/)
-- [Create services](https://docs.docker.com/engine/swarm/services/)
-- [Service configuration](https://docs.docker.com/engine/reference/commandline/service_create/)
+### Documentação Oficial
+- [services](../00_docs/conceitos/services.md) - Conceitos de services
+- [Deploy services](../00_docs/conceitos/services.md) - Criar e gerenciar services
+
+### Comandos CLI
+- [docker service create]()
+- [docker service]()
+- [docker service update]()
+- [docker service ps]()

@@ -12,17 +12,51 @@
 ### O que são Secrets?
 
 Docker Secrets são dados sensíveis (senhas, tokens, chaves SSH, certificados) que:
-- São criptografados em repouso e em trânsito
+- São **criptografados em repouso e em trânsito**
 - São distribuídos automaticamente para todos os nós managers
 - São montados em `/run/secrets/` nos containers
 - Podem ser atualizados com rolling update
 
 ### O que são Configs?
 
-Docker Configs são similares aos Secrets mas para dados não sensíveis:
+Docker Configs são similares aos Secrets mas para dados **não sensíveis**:
 - Arquivos de configuração (nginx.conf, app.json, etc)
 - Não precisam de criptografia
 - Montados em `/etc/config/`
+
+### Como o Swarm gerencia Secrets
+
+1. **Armazenamento**: Enviado para o manager via TLS mútuo, armazenado no Raft log (criptografado)
+2. **Distribuição**: Quando um service recebe acesso ao secret, ele é descriptografado e montado em memória
+3. **Remoção**: Quando o container para, o secret é removido da memória
+
+```
+┌─────────────────────────────────────────────────────┐
+│              GERENCIAMENTO DE SECRETS                │
+│                                                     │
+│  1. Create ──► Manager (criptografado no Raft)    │
+│                        │                            │
+│        ┌───────────────┼───────────────┐          │
+│        ▼               ▼               ▼          │
+│    ┌────────┐      ┌────────┐      ┌────────┐    │
+│    │Manager 1│      │Manager 2│      │Manager 3│    │
+│    └────────┘      └────────┘      └────────┘    │
+│        │                                           │
+│        ▼ (quando service tem acesso)               │
+│    ┌────────────────┐                            │
+│    │ /run/secrets/  │ (montado em memória)       │
+│    └────────────────┘                            │
+└─────────────────────────────────────────────────────┘
+```
+
+### Secrets vs Configs
+
+| Aspecto | Secrets | Configs |
+|---------|---------|--------|
+| Criptografia | Sim | Não |
+| Escopo | Cluster | Cluster |
+| Montagem | /run/secrets/ | /etc/config/ |
+| Uso típico | Senhas, tokens, chaves | Arquivos de config |
 
 ### Compose vs Swarm
 
@@ -50,18 +84,11 @@ secrets:
     file: ./db_password.txt
 ```
 
-### Secrets no Compose vs Swarm
-
-| Aspecto | Compose | Swarm |
-|---------|---------|-------|
-| Criptografia | Não | Sim (AES-256) |
-| Escopo | Host | Cluster |
-| Distribuição | Manual | Automática |
-| Atualização | Recreate container | Rolling update |
-
 ## Prática
 
-### Criando Secrets
+
+
+> **Quando### Criando Secrets usar `docker secret create`**: Para criar um secret no Swarm
 
 ```bash
 # Criar secret a partir de arquivo
@@ -81,6 +108,8 @@ docker secret rm my_secret
 ```
 
 ### Criando Configs
+
+> **Quando usar `docker config create`**: Para criar um config no Swarm
 
 ```bash
 # Criar config a partir de arquivo
@@ -166,6 +195,12 @@ docker service update --secret-rm old_secret --secret-add new_secret myservice
 
 ## Referências
 
-- [Manage sensitive data](https://docs.docker.com/engine/swarm/secrets/)
-- [Docker configs](https://docs.docker.com/engine/swarm/configs/)
-- [Secret specs in compose](https://docs.docker.com/compose/compose-file/#secrets)
+### Documentação Oficial
+- [secrets](../00_docs/guia/secrets.md) - Gerenciar dados sensíveis
+- [configs](../00_docs/guia/configs.md) - Configs
+
+### Comandos CLI
+- [docker secret create]()
+- [docker secret ls]()
+- [docker config create]()
+- [docker config ls]()

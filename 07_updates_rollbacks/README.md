@@ -26,28 +26,35 @@ Rolling updates permitem atualizar serviços **sem downtime**:
 | `--update-max-failure-ratio` | % de falhas aceitas antes de parar | 0 |
 | `--update-monitor` | Tempo para verificar se task está running | 0s |
 
-### Rollback
+### Fluxo de Update
 
-```bash
-# Rollback automático (se configurado)
---rollback-failure-action: rollback
-
-# Rollback manual
-docker service rollback myservice
+```
+┌─────────────────────────────────────────────────────┐
+│              ROLLING UPDATE                         │
+│                                                     │
+│  v1.0         v1.0         v1.0                    │
+│    │           │           │                       │
+│    ▼           │           │                       │
+│  v1.1         │           │                       │
+│    │           │           │                       │
+│    ▼           ▼           │                       │
+│  v1.1       v1.1           │                       │
+│    │           │           ▼                       │
+│    ▼           ▼         v1.1                      │
+│  v1.1       v1.1         v1.1                      │
+│                                                     │
+└─────────────────────────────────────────────────────┘
 ```
 
-### Parâmetros de Rollback
+### Rollback
 
-| Parâmetro | Descrição | Default |
-|-----------|-----------|---------|
-| `--rollback-delay` | Tempo entre rollbacks | 0s |
-| `--rollback-parallelism` | Tasks roll-backed simultaneamente | 1 |
-| `--rollback-failure-action` | Ação se rollback falhar | pause |
-| `--rollback-max-failure-ratio` | % de falhas aceitas | 0 |
+Se o update falhar, você pode fazer rollback:
+- **Automático**: Configurado com `failure_action: rollback`
+- **Manual**: `docker service rollback`
 
 ### Healthchecks
 
-Importante para updates seguros:
+Importante para updates seguros - o Swarm espera o container ficar healthy antes de continuar:
 
 ```yaml
 services:
@@ -64,6 +71,8 @@ services:
 ## Prática
 
 ### Atualizando Services
+
+> **Quando usar `docker service update`**: Para alterar configuração de um service existente
 
 ```bash
 # Atualizar imagem
@@ -100,6 +109,8 @@ docker service inspect --pretty myservice
 
 ### Rollback
 
+> **Quando usar `docker service rollback`**: Para reverter para a versão anterior
+
 ```bash
 # Rollback para versão anterior
 docker service rollback myservice
@@ -115,6 +126,8 @@ docker service inspect --pretty myservice | grep -A 20 "Update status"
 ```
 
 ### Healthchecks
+
+> **Quando usar `--health-*`**: Para adicionar verificação de saúde ao service
 
 ```bash
 # Service com healthcheck
@@ -135,7 +148,6 @@ docker service update \
   --update-delay 10s \
   --update-failure-action rollback \
   --update-monitor 15s \
-  --update-order start-first \
   api
 ```
 
@@ -180,6 +192,9 @@ services:
 
 ## Referências
 
-- [Update a service](https://docs.docker.com/engine/swarm/services/#update-a-service)
-- [Rolling updates](https://docs.docker.com/engine/swarm/swarm-tutorial/rolling-update/)
-- [Healthchecks](https://docs.docker.com/engine/swarm/configs/)
+### Documentação Oficial
+- [services - update](../00_docs/conceitos/services.md#configure-a-services-update-behavior)
+
+### Comandos CLI
+- [docker service update]()
+- [docker service rollback]()

@@ -96,12 +96,15 @@ networks:
 Algumas configurações do compose **não funcionam** no Swarm:
 - `build:` - imagens devem estar pré-construídas
 - `depends_on` - não garante ordem de start (use healthchecks)
-- `links` - use networks invece
+- `links` - use networks inverse
 - `pid` - não suportado
+- `net: host` - não suportado
 
 ## Prática
 
 ### Deploy de uma Stack
+
+> **Quando usar `docker stack deploy`**: Para fazer deploy de toda uma aplicação de uma vez
 
 ```bash
 # Criar arquivo docker-compose.yml primeiro (exemplo em codigo/)
@@ -125,23 +128,6 @@ docker stack logs mystack
 docker stack rm mystack
 ```
 
-### Exemplo Completo
-
-```bash
-# Criar arquivo compose com pelo menos 2 serviços
-# Deploy
-docker stack deploy -c minha-stack.yml minhaapp
-
-# Verificar
-docker stack services minhaapp
-
-# Escalar um serviço específico
-docker service scale minhaapp_web=5
-
-# Atualizar (editando compose e redeployando)
-docker stack deploy -c nova-stack.yml minhaapp
-```
-
 ### Comandos Úteis
 
 ```bash
@@ -151,8 +137,11 @@ docker stack services mystack | grep -v Running
 # Inspect de um service específico da stack
 docker service inspect mystack_web
 
-# Visualizar formato
-docker stack config -c docker-compose.yml  # mostra o que será deployado
+# Visualizar formato (o que será deployado)
+docker stack config -c docker-compose.yml
+
+# Atualizar stack (redeploy)
+docker stack deploy -c docker-compose.yml mystack
 ```
 
 ## Exercícios
@@ -164,6 +153,11 @@ docker stack config -c docker-compose.yml  # mostra o que será deployado
 
 ## Referências
 
-- [Deploy stacks](https://docs.docker.com/engine/swarm/stacks/)
-- [Compose file reference](https://docs.docker.com/compose/compose-file/)
-- [docker stack deploy](https://docs.docker.com/engine/reference/commandline/stack_deploy/)
+### Documentação Oficial
+- [stack-deploy](../00_docs/guia/stack-deploy.md) - Deploy de stacks
+
+### Comandos CLI
+- [docker stack deploy]()
+- [docker stack ls]()
+- [docker stack services]()
+- [docker stack ps]()

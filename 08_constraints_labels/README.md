@@ -62,12 +62,14 @@ deploy:
 |---------|---------|
 | DB só em nodes de storage | constraint: node.labels.storage==ssd |
 | API em workers | constraint: node.role==worker |
-|Cache em nós específicos | constraint: node.labels.cache==true |
+| Cache em nós específicos | constraint: node.labels.cache==true |
 | Monitoring em todos | service mode: global |
 
 ## Prática
 
 ### Constraints Básicos
+
+> **Quando usar `--constraint`**: Para limitar onde um service pode rodar
 
 ```bash
 # Criar service só em managers
@@ -146,6 +148,8 @@ services:
 
 ### Global Services
 
+> **Quando usar `--mode global`**: Para rodar em todos os nós
+
 ```bash
 # Service que roda em TODOS os nós
 docker service create \
@@ -187,6 +191,10 @@ deploy:
 
 ## Referências
 
-- [Placement constraints](https://docs.docker.com/engine/swarm/services/#placement-constraints)
-- [Docker service create](https://docs.docker.com/engine/reference/commandline/service_create/)
-- [Placement preferences](https://docs.docker.com/compose/compose-file/compose-file-v3/#placement)
+### Documentação Oficial
+- [services - placement constraints](../00_docs/conceitos/services.md#placement-constraints)
+- [manage-nodes - labels](../00_docs/guia/manage-nodes.md#add-or-remove-label-metadata)
+
+### Comandos CLI
+- [docker service create - constraints]()
+- [docker node update --label-add]()

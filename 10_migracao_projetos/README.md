@@ -69,6 +69,18 @@ volumes:
 3. **Volumes** → Named volumes + backups
 4. **Ports** → Verificar conflitos em produção
 
+### Checklist de Produção
+
+- [ ] Imagens em registry privado
+- [ ] Secrets configurados
+- [ ] Recursos (CPU/memória) definidos
+- [ ] Constraints para DB (manager)
+- [ ] Healthchecks implementados
+- [ ] Políticas de restart
+- [ ] Networks overlay
+- [ ] Volumes com backup
+- [ ] Logging configurado
+
 ## Prática
 
 ### Passo 1: Preparar Imagens
@@ -168,22 +180,6 @@ docker stack services minhaapp
 docker service scale minhaapp_app=5
 ```
 
-### Exemplo: Compose → Swarm Completo
-
-```bash
-# 1. Ler compose atual
-# docker-compose.yml (compose v2)
-
-# 2. Converter para v3
-docker-compose convert > compose-v3.yml
-
-# 3. Adaptar (adicionar deploy, remover build)
-# editar compose-v3.yml
-
-# 4. Deploy em swarm
-docker stack deploy -c compose-v3.yml minhaapp
-```
-
 ### Comandos de Migração
 
 ```bash
@@ -198,18 +194,6 @@ docker-compose config -q
 docker-compose config
 ```
 
-### Checklist de Produção
-
-- [ ] Imagens em registry privado
-- [ ] Secrets configurados
-- [ ] Recursos (CPU/memória) definidos
-- [ ] Constraints para DB (manager)
-- [ ] Healthchecks implementados
-- [ ] Políticas de restart
-- [ ] Networks overlay
-- [ ] Volumes com backup
-- [ ] Logging configurado
-
 ## Exercícios
 
 1. **Exercício 1**: Pegar um compose file simples e converter para Swarm
@@ -219,6 +203,11 @@ docker-compose config
 
 ## Referências
 
+### Documentação Oficial
 - [Compose file reference](https://docs.docker.com/compose/compose-file/)
 - [Deploy to Swarm](https://docs.docker.com/engine/swarm/stacks/)
 - [Best practices](https://docs.docker.com/engine/swarm/best-practices/)
+
+### Comandos CLI
+- [docker stack deploy]()
+- [docker secret create]()

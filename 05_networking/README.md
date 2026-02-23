@@ -11,35 +11,35 @@
 
 ### Tipos de Networks no Swarm
 
+O Docker Swarm gera dois tipos de tráfego:
+
+1. **Control and Management Plane**: Mensagens de gerenciamento (join, leave, etc). Sempre criptografado.
+2. **Application Data Plane**: Tráfego dos containers e clientes.
+
+### Redes Principais
+
 | Tipo | Escopo | Uso |
 |------|--------|-----|
+| **ingress** | Swarm-wide | Load balancing do tráfego externo (routing mesh) |
+| **docker_gwbridge** | Local | Bridge host ↔ containers |
 | **overlay** | Multi-host | Comunicação entre serviços em diferentes nós |
-| **ingress** | Swarm-wide | Load balancing do tráfego externo |
-| **docker_gwbridge** | Local | Comunicação host ↔ containers |
-| **host** | Local | Networking modo host (não recomendado) |
+| **host** | Local | Modo host (não recomendado) |
 
-### Overlay Network
+### Como funciona o Routing Mesh
 
-Rede que permite comunicação entre containers em diferentes hosts do swarm. O Swarm usa:
-- **VXLAN**: Tunneling layer 2 sobre layer 3
-- **Control plane**: Criptografado por padrão (AES-256)
-- **Data plane**: Não criptografado por padrão (pode ativar com --opt encrypted)
-
-### Ingress Network
-
-Rede especial do Swarm que faz **load balancing** automático:
-- Publica portas em todos os nós
-- Redistribui tráfego para o nó que tem a task
-- Usa IPVS (Linux kernel) para balanceamento
+Quando um nó recebe uma requisição na porta publicada:
+1. O nó repassa para o módulo **IPVS** (Linux kernel)
+2. O IPVS mantém registro de todos os IPs das tasks
+3. Seleciona um IP e roteia a requisição
 
 ```
-┌──────────────────────────────────────────────────────┐
+┌─────────────────────────────────────────────────────┐
 │                    INGRESS NETWORK                   │
 │                                                      │
-│  Request ──► Node 1:80 ──► (IPVS) ──► Node 3:80     │
-│                  (não tem task)       (tem task)    │
+│  Request ──► Node 1:8080 ──► (IPVS) ──► Node 3   │
+│                  (não tem task)        (tem task)   │
 │                                                      │
-└──────────────────────────────────────────────────────┘
+└─────────────────────────────────────────────────────┘
 ```
 
 ### Service Discovery
@@ -50,29 +50,19 @@ No Swarm, cada serviço obtém um **nome DNS** que resolve para todos os IPs das
 # Do container web, você pode acessar:
 ping db          # resolve para IPs das tasks de db
 ping api         # resolve para IPs das tasks de api
-
-# DNS interno automática
 ```
 
-### Redes no Compose vs Swarm
+### Firewall
 
-```yaml
-# Compose (Docker Compose V1/V2)
-services:
-  web:
-    networks:
-      - frontend
-
-# Swarm (mesma sintaxe, mas cria overlay)
-services:
-  web:
-    networks:
-      - frontend
-```
+Para o Swarm funcionar, os nós precisam se comunicar:
+- **Port 7946** TCP/UDP: Para descoberta de rede dos containers
+- **Port 4789** UDP: Para dados do overlay network (pode ser alterado)
 
 ## Prática
 
 ### Criando Networks
+
+> **Quando usar `docker network create`**: Para criar uma rede overlay customizada
 
 ```bash
 # Criar overlay network (criptografada)
@@ -119,19 +109,19 @@ services:
 networks:
   frontend:
     driver: overlay
-    # driver_opts:
-    #   encrypted: "true"
   backend:
     driver: overlay
 ```
 
 ### Publicando Portas
 
+> **Quando usar `-p` ou `--publish`**: Para expor portas
+
 ```bash
-# Forma 1: Porta explícita
+# Forma 1: Porta explícita (routing mesh)
 docker service create -p 8080:80 nginx
 
-# Forma 2: Porta aleatória ( Swarm atribui)
+# Forma 2: Porta aleatória (Swarm atribui)
 docker service create -p 80 nginx
 
 # Forma 3: Publicação em todos os nós (ingress)
@@ -141,14 +131,17 @@ docker service create --publish mode=ingress,target=80,published=8080 nginx
 docker service create --publish mode=host,target=80 nginx
 ```
 
-### VSF (Virtual IP) vs DNS-RR
+### DNS e Service Discovery
 
 ```bash
-# VIP (default): Requests distribuídas entre todas as tasks
-docker service create --name vip-service nginx
+# Criar serviços em uma network
+docker network create minha-rede
 
-# DNS Round Robin: DNS retorna todas as IPs diretamente
-docker service create --name rr-service --endpoint-mode dnsrr nginx
+docker service create --network minha-rede --name db postgres
+docker service create --network minha-rede --name api myapi
+
+# De dentro do container api, você pode acessar db pelo nome
+# docker exec -it <api-container> ping db
 ```
 
 ## Exercícios
@@ -160,6 +153,11 @@ docker service create --name rr-service --endpoint-mode dnsrr nginx
 
 ## Referências
 
-- [Networking overview](https://docs.docker.com/network/)
-- [Use overlay networks](https://docs.docker.com/network/overlay/)
-- [Swarm service networking](https://docs.docker.com/engine/swarm/networking/)
+### Documentação Oficial
+- [networking](../00_docs/guia/networking.md) - Redes no Swarm
+- [ingress](../00_docs/guia/ingress.md) - Routing mesh
+
+### Comandos CLI
+- [docker network create]()
+- [docker network ls]()
+- [docker network inspect]()
