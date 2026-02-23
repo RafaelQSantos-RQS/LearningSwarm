@@ -51,6 +51,23 @@ Docker Swarm é a ferramenta de orquestração nativa do Docker. Permite agrupar
 
 ## Prática
 
+### Referência de Comandos
+
+Consulte a pasta `00_referencia_cli` para documentação completa de cada comando.
+
+| Comando | Descrição | Referência |
+|---------|-----------|------------|
+| `docker swarm init` | Inicializa o swarm | [init](../00_referencia_cli/02_docker_swarm_init.md) |
+| `docker node ls` | Lista nós do cluster | - |
+| `docker service create` | Cria um service | - |
+| `docker service ls` | Lista services | - |
+| `docker service ps` | Lista tasks de um service | - |
+| `docker service rm` | Remove um service | - |
+| `docker service inspect` | Detalhes do service | - |
+| `docker service logs` | Logs do service | - |
+| `docker service scale` | Escala réplicas | - |
+| `docker service update` | Atualiza service | - |
+
 ### Inicializando um Swarm
 
 ```bash
@@ -65,6 +82,8 @@ docker node ls
 ```
 
 ### Primeiro Service
+
+> **Quando usar `docker service create`**: Para criar um container isolado gerenciado pelo Swarm (sem compose)
 
 ```bash
 # Criar um service básico (similar ao docker run)
@@ -81,6 +100,14 @@ docker service rm nginx
 ```
 
 ### Comandos Essenciais
+
+> **Quando usar `docker service inspect`**: Para debugar, ver configuração completa ou status de update
+> 
+> **Quando usar `docker service logs`**: Para ver logs agregados de todas as réplicas (diferente do docker logs)
+> 
+> **Quando usar `docker service scale`**: Para aumentar/diminuir réplicas rapidamente
+> 
+> **Quando usar `docker service update`**: Para alterar imagem, variáveis, portas, recursos (faz rolling update automático)
 
 ```bash
 # Inspect service (detalhes completos)
@@ -105,6 +132,14 @@ docker service update --image nginx:latest nginx
 
 ## Referências
 
+### Comandos CLI
+- [docker swarm](../00_referencia_cli/00_docker_swarm.md)
+- [docker swarm init](../00_referencia_cli/02_docker_swarm_init.md)
+- [docker swarm join](../00_referencia_cli/03_docker_swarm_join.md)
+- [docker swarm join-token](../00_referencia_cli/04_docker_swarm_join-token.md)
+- [docker swarm leave](../00_referencia_cli/05_docker_swarm_leave.md)
+
+### Documentação
 - [Docker Swarm Overview](https://docs.docker.com/engine/swarm/)
 - [Swarm Mode Tutorial](https://docs.docker.com/engine/swarm/swarm-tutorial/)
 - [Docker Engine Swarm](https://docs.docker.com/engine/swarm/key-concepts/)

@@ -3,6 +3,7 @@
 ## Estrutura das Aulas
 
 Cada lição segue o padrão `XX_topico`:
+- `00_referencia_cli` - Referência da CLI oficial do Docker Swarm
 - `01_introducao` - Conceitos básicos e init
 - `02_nodes_cluster` - Nodes, manager/worker, quorum
 - `03_services` - Services, réplicas, tasks
@@ -21,6 +22,16 @@ Cada pasta de aula DEVE conter:
 - `codigo/` - Exemplos de configuração
 - `exercicios/` - Desafios práticos
 
+### Pasta de Referência (00_referencia_cli)
+
+Contém documentação limpa da CLI oficial do Docker Swarm. Cada comando tem seu próprio arquivo markdown com:
+- Uso
+- Opções
+- Exemplos
+- Quando usar
+
+**Todas as aulas DEVEM referenciar esses arquivos na seção de prática.**
+
 ## Convenções
 
 - Exemplos em YAML para compose/swarm
@@ -34,8 +45,10 @@ Cada README deve seguir:
 1. **Objetivos** - O que o aluno vai aprender
 2. **Teoria** - Conceitos fundamentais com analogias ao Compose
 3. **Prática** - Comandos e exemplos
+   - Incluir tabela de comandos usados com colunas: Comando, Descrição, Referência
+   - Adicionar notas "Quando usar" para cada comando/key feature
 4. **Exercícios** - Desafios propostos
-5. **Referências** - Links oficiais
+5. **Referências** - Links oficiais + referência aos arquivos em 00_referencia_cli
 
 ## Fluxo de Trabalho
 
