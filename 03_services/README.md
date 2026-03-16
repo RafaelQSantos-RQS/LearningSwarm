@@ -106,10 +106,11 @@ docker service create \
 docker service create \
   --name db \
   --constraint "node.role==manager" \
+  -e POSTGRES_PASSWORD=teste@123 \
   postgres:15
 
 # Global service
-docker service create --mode global --name monitoring prometheus/prometheus
+docker service create --mode global --name monitoring prom/prometheus
 ```
 
 ### Modos de Service
