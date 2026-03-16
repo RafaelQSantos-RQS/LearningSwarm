@@ -1,0 +1,22 @@
+services:
+  web:
+    image: nginx
+    networks:
+      - frontend
+
+  api:
+    image: nginx
+    networks:
+      - frontend
+      - backend
+
+  db:
+    image: postgres
+    networks:
+      - backend
+
+networks:
+  frontend:
+    driver: overlay
+  backend:
+    driver: overlay
